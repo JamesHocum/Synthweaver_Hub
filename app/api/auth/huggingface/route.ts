@@ -1,7 +1,6 @@
-"use server"
-
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
+import { headers } from "next/headers"
 
 export async function GET() {
   const clientId = process.env.HUGGINGFACE_CLIENT_ID
@@ -11,13 +10,24 @@ export async function GET() {
   }
 
   const supabase = await createClient()
+  
+  if (!supabase) {
+    return new Response("Database not configured", { status: 500 })
+  }
+  
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
     redirect("/auth/login?redirect=/dashboard&connect=huggingface")
   }
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : ""}/api/auth/huggingface/callback`
+  // Get the host from headers to build the correct redirect URI
+  const headersList = await headers()
+  const host = headersList.get("host") || "localhost:3000"
+  const protocol = host.includes("localhost") ? "http" : "https"
+  const baseUrl = `${protocol}://${host}`
+  
+  const redirectUri = `${baseUrl}/api/auth/huggingface/callback`
   const scope = "openid profile email read-repos"
   const state = user.id
 
