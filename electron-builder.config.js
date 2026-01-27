@@ -127,8 +127,8 @@ module.exports = {
   // Auto-update configuration (optional)
   publish: {
     provider: 'github',
-    owner: 'spell-weaver-studios',
-    repo: 'synthweaver-hub',
+    owner: 'JamesHocum',
+    repo: 'Synthweaver_Hub',
     releaseType: 'release',
   },
 };

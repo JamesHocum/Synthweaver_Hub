@@ -111,12 +111,12 @@ function createMenu() {
         },
         {
           label: 'GitHub',
-          click: () => shell.openExternal('https://github.com/spell-weaver-studios/synthweaver-hub'),
+          click: () => shell.openExternal('https://github.com/JamesHocum/Synthweaver_Hub'),
         },
         { type: 'separator' },
         {
           label: 'Report Issue',
-          click: () => shell.openExternal('https://github.com/spell-weaver-studios/synthweaver-hub/issues'),
+          click: () => shell.openExternal('https://github.com/JamesHocum/Synthweaver_Hub/issues'),
         },
       ],
     },
