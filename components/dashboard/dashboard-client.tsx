@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
@@ -24,6 +24,9 @@ import {
   FolderGit2,
   Brain,
   Plug,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
@@ -40,7 +43,7 @@ interface Integration {
   provider: string
   provider_username: string | null
   connected_at: string
-  last_synced_at: string | null
+  last_sync_at: string | null
   is_active: boolean
 }
 
@@ -73,16 +76,64 @@ interface DashboardClientProps {
   integrations: Integration[]
   repositories: Repository[]
   models: Model[]
+  initialTab?: string
 }
 
-export function DashboardClient({ user, profile, integrations, repositories, models }: DashboardClientProps) {
+// Format relative time for last synced
+function formatRelativeTime(dateStr: string | null): string {
+  if (!dateStr) return "Never"
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return "Just now"
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString()
+}
+
+export function DashboardClient({ user, profile, integrations, repositories, models, initialTab }: DashboardClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [syncing, setSyncing] = useState<string | null>(null)
   const [connecting, setConnecting] = useState<string | null>(null)
+  const [lastSyncTimes, setLastSyncTimes] = useState<Record<string, string | null>>({})
+  
+  // Get current tab from URL or default to integrations
+  const currentTab = searchParams.get("tab") || initialTab || "integrations"
+  
+  // Check for connection success messages
+  const connected = searchParams.get("connected")
+  const error = searchParams.get("error")
+
+  useEffect(() => {
+    // Update last sync times from integrations
+    const times: Record<string, string | null> = {}
+    integrations.forEach(i => {
+      times[i.provider] = i.last_sync_at
+    })
+    setLastSyncTimes(times)
+  }, [integrations])
+
+  const handleTabChange = (value: string) => {
+    // Update URL with new tab
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("tab", value)
+    // Remove connection status params when switching tabs
+    params.delete("connected")
+    params.delete("error")
+    router.push(`/dashboard?${params.toString()}`)
+  }
 
   const handleLogout = async () => {
     const supabase = getSupabaseBrowserClient()
-    await supabase.auth.signOut()
+    if (supabase) {
+      await supabase.auth.signOut()
+    }
     router.push("/")
     router.refresh()
   }
@@ -110,6 +161,8 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
         method: "POST",
       })
       if (res.ok) {
+        // Update last sync time locally for immediate feedback
+        setLastSyncTimes(prev => ({ ...prev, github: new Date().toISOString() }))
         router.refresh()
       }
     } finally {
@@ -125,6 +178,8 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
         method: "POST",
       })
       if (res.ok) {
+        // Update last sync time locally for immediate feedback
+        setLastSyncTimes(prev => ({ ...prev, huggingface: new Date().toISOString() }))
         router.refresh()
       }
     } finally {
@@ -170,9 +225,23 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
 
       {/* Dashboard Content */}
       <main className="max-w-7xl mx-auto p-6">
-        <Tabs defaultValue="integrations" className="w-full">
+        {/* Connection Status Banner */}
+        {connected && (
+          <div className="mb-6 p-4 rounded-lg flex items-center gap-3" style={{ backgroundColor: "rgba(var(--neon-primary-rgb), 0.1)", border: "1px solid var(--neon-primary)" }}>
+            <CheckCircle2 className="h-5 w-5" style={{ color: "var(--neon-primary)" }} />
+            <span className="text-white">Successfully connected! Your data will sync automatically.</span>
+          </div>
+        )}
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <span className="text-white">Connection failed: {error.replace(/_/g, " ")}</span>
+          </div>
+        )}
+
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
           <TabsList
-            className="w-full justify-start bg-[#12121a] border mb-6"
+            className="w-full justify-start bg-[#12121a] border mb-6 overflow-x-auto"
             style={{ borderColor: "rgba(var(--neon-primary-rgb), 0.3)" }}
           >
             <TabsTrigger
@@ -253,6 +322,12 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
                     </span>
                   )}
                 </div>
+                {githubIntegration && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                    <Clock className="h-3 w-3" />
+                    <span>Last synced: {formatRelativeTime(lastSyncTimes.github)}</span>
+                  </div>
+                )}
                 {githubIntegration ? (
                   <div className="flex gap-2">
                     <Button
@@ -270,7 +345,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
                       ) : (
                         <>
                           <RefreshCw className="h-4 w-4 mr-2" />
-                          Sync
+                          Sync Now
                         </>
                       )}
                     </Button>
@@ -331,6 +406,12 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
                     </span>
                   )}
                 </div>
+                {huggingfaceIntegration && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                    <Clock className="h-3 w-3" />
+                    <span>Last synced: {formatRelativeTime(lastSyncTimes.huggingface)}</span>
+                  </div>
+                )}
                 {huggingfaceIntegration ? (
                   <div className="flex gap-2">
                     <Button
@@ -348,7 +429,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
                       ) : (
                         <>
                           <RefreshCw className="h-4 w-4 mr-2" />
-                          Sync
+                          Sync Now
                         </>
                       )}
                     </Button>

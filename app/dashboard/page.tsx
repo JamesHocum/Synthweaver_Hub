@@ -2,8 +2,18 @@ import { redirect } from "next/navigation"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { DashboardClient } from "@/components/dashboard/dashboard-client"
 
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams: Promise<{ tab?: string }>
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const { tab } = await searchParams
   const supabase = await getSupabaseServerClient()
+  
+  if (!supabase) {
+    redirect("/auth/login?error=database_not_configured")
+  }
+  
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -39,6 +49,7 @@ export default async function DashboardPage() {
       integrations={integrations || []}
       repositories={repositories || []}
       models={models || []}
+      initialTab={tab}
     />
   )
 }

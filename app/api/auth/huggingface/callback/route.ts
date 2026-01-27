@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
+import { headers } from "next/headers"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -16,7 +17,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const redirectUri = `${process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : ""}/api/auth/huggingface/callback`
+    // Get the host from headers to build the correct redirect URI
+    const headersList = await headers()
+    const host = headersList.get("host") || "localhost:3000"
+    const protocol = host.includes("localhost") ? "http" : "https"
+    const redirectUri = `${protocol}://${host}/api/auth/huggingface/callback`
 
     // Exchange code for access token
     const tokenResponse = await fetch("https://huggingface.co/oauth/token", {
