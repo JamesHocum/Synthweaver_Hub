@@ -1,13 +1,28 @@
 import { redirect } from "next/navigation"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { DashboardClient } from "@/components/dashboard/dashboard-client"
+import { DemoDashboardWrapper } from "@/components/dashboard/demo-dashboard-wrapper"
 
 interface DashboardPageProps {
-  searchParams: Promise<{ tab?: string }>
+  searchParams: Promise<{ tab?: string; demo?: string }>
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const { tab } = await searchParams
+  const { tab, demo } = await searchParams
+  
+  // If demo mode, render with sample data (no auth required)
+  if (demo === "true") {
+    return (
+      <DemoDashboardWrapper
+        user={null}
+        profile={null}
+        integrations={[]}
+        repositories={[]}
+        models={[]}
+        initialTab={tab}
+      />
+    )
+  }
+  
   const supabase = await getSupabaseServerClient()
   
   if (!supabase) {
@@ -43,7 +58,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     .order("synced_at", { ascending: false })
 
   return (
-    <DashboardClient
+    <DemoDashboardWrapper
       user={user}
       profile={profile}
       integrations={integrations || []}

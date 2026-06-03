@@ -12,8 +12,12 @@ export default function Home() {
         <Header />
         <main>
           <HeroSection />
-          <FeaturesSection />
-          <IntegrationsSection />
+          <section id="features">
+            <FeaturesSection />
+          </section>
+          <section id="integrations">
+            <IntegrationsSection />
+          </section>
         </main>
         <Footer />
       </div>

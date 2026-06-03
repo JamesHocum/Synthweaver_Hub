@@ -83,7 +83,7 @@ export function Header() {
         </nav>
 
         {/* Theme Controls */}
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4" data-demo="theme-controls">
           {/* Theme Toggle Buttons */}
           <div className="hidden sm:flex items-center gap-1 rounded-lg border border-border p-1">
             <button

@@ -3,6 +3,8 @@ import type { Metadata, Viewport } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { PWAProvider } from "@/components/pwa-provider"
+import { DemoModeProvider } from "@/contexts/demo-mode-context"
+import { DemoOverlay } from "@/components/demo-overlay"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -54,9 +56,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="theme-synth">
       <body className={`${inter.className} ${jetbrainsMono.variable} font-sans antialiased`}>
-        <PWAProvider>
-          {children}
-        </PWAProvider>
+        <DemoModeProvider>
+          <PWAProvider>
+            {children}
+          </PWAProvider>
+          <DemoOverlay />
+        </DemoModeProvider>
         <Analytics />
       </body>
     </html>

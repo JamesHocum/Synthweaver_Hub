@@ -2,10 +2,13 @@
 
 import type React from "react"
 
-import { ArrowRight, Github, Cloud, Zap, Puzzle } from "lucide-react"
+import { ArrowRight, Github, Cloud, Zap, Puzzle, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useDemoMode } from "@/contexts/demo-mode-context"
+import Link from "next/link"
 
 export function HeroSection() {
+  const { startDemo } = useDemoMode()
   return (
     <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl text-center">
@@ -16,7 +19,7 @@ export function HeroSection() {
         </div>
 
         {/* Main Title */}
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
+        <h1 data-demo="hero-title" className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
           <span className="neon-text">Synthweaver</span>
         </h1>
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight neon-text-secondary mb-6">Hub</h2>
@@ -30,14 +33,36 @@ export function HeroSection() {
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-          <Button className="neon-button px-6 py-2.5 font-semibold">
-            Get Started
-            <ArrowRight className="ml-2 h-4 w-4" />
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+          <Button className="neon-button px-6 py-2.5 font-semibold" asChild>
+            <Link href="/auth/login">
+              Get Started
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </Button>
-          <Button variant="outline" className="neon-border bg-transparent hover:bg-[var(--neon-primary)]/10">
-            <Github className="mr-2 h-4 w-4" />
-            View on GitHub
+          <Button variant="outline" className="neon-border bg-transparent hover:bg-[var(--neon-primary)]/10" asChild>
+            <a href="https://github.com/JamesHocum/Synthweaver_Hub" target="_blank" rel="noopener noreferrer">
+              <Github className="mr-2 h-4 w-4" />
+              View on GitHub
+            </a>
+          </Button>
+        </div>
+
+        {/* Demo Mode Button */}
+        <div className="mb-16">
+          <Button
+            onClick={startDemo}
+            variant="ghost"
+            className="group relative overflow-hidden rounded-full border px-6 py-2 transition-all hover:scale-105"
+            style={{
+              borderColor: "var(--neon-primary)",
+              color: "var(--neon-primary)",
+            }}
+          >
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--neon-primary)]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Play className="mr-2 h-4 w-4" />
+            Try Demo Mode
+            <span className="ml-2 text-xs opacity-70">(Interactive Tour)</span>
           </Button>
         </div>
 

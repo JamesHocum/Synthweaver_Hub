@@ -7,6 +7,7 @@ import Link from "next/link"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useDemoMode } from "@/contexts/demo-mode-context"
 import {
   Github,
   Box,
@@ -99,9 +100,13 @@ function formatRelativeTime(dateStr: string | null): string {
 export function DashboardClient({ user, profile, integrations, repositories, models, initialTab }: DashboardClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { isDemoMode, endDemo } = useDemoMode()
   const [syncing, setSyncing] = useState<string | null>(null)
   const [connecting, setConnecting] = useState<string | null>(null)
   const [lastSyncTimes, setLastSyncTimes] = useState<Record<string, string | null>>({})
+  
+  // Check if in demo mode (via context or URL param)
+  const isDemo = isDemoMode || searchParams.get("demo") === "true"
   
   // Get current tab from URL or default to integrations
   const currentTab = searchParams.get("tab") || initialTab || "integrations"
@@ -190,7 +195,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       {/* Dashboard Header */}
-      <header className="border-b px-6 py-4" style={{ borderColor: "rgba(var(--neon-primary-rgb), 0.3)" }}>
+      <header data-demo="dashboard-header" className="border-b px-6 py-4" style={{ borderColor: "rgba(var(--neon-primary-rgb), 0.3)" }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <Image src="/images/brand-logo.png" alt="Synthweaver Hub" width={40} height={40} className="rounded-lg" />
@@ -206,6 +211,31 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
           </Link>
 
           <div className="flex items-center gap-4">
+            {isDemo && (
+              <div className="flex items-center gap-2">
+                <span
+                  className="px-3 py-1 text-xs font-semibold rounded-full animate-pulse"
+                  style={{
+                    backgroundColor: "rgba(var(--neon-primary-rgb), 0.2)",
+                    color: "var(--neon-primary)",
+                    border: "1px solid var(--neon-primary)",
+                  }}
+                >
+                  Demo Mode
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    endDemo()
+                    router.push("/")
+                  }}
+                  className="text-gray-400 hover:text-white text-xs"
+                >
+                  Exit Demo
+                </Button>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-gray-400">
               <Plug className="h-5 w-5" />
               <span>{profile?.username || user.email}</span>
@@ -253,6 +283,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
             </TabsTrigger>
             <TabsTrigger
               value="repositories"
+              data-demo="repositories-tab"
               className="data-[state=active]:bg-[var(--neon-primary)] data-[state=active]:text-[#0a0a0f]"
             >
               <FolderGit2 className="h-4 w-4 mr-2" />
@@ -263,6 +294,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
             </TabsTrigger>
             <TabsTrigger
               value="models"
+              data-demo="models-tab"
               className="data-[state=active]:bg-[var(--neon-primary)] data-[state=active]:text-[#0a0a0f]"
             >
               <Brain className="h-4 w-4 mr-2" />
@@ -273,6 +305,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
             </TabsTrigger>
             <TabsTrigger
               value="extensions"
+              data-demo="extensions-tab"
               className="data-[state=active]:bg-[var(--neon-primary)] data-[state=active]:text-[#0a0a0f]"
             >
               <Puzzle className="h-4 w-4 mr-2" />
@@ -280,6 +313,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
             </TabsTrigger>
             <TabsTrigger
               value="settings"
+              data-demo="settings-tab"
               className="data-[state=active]:bg-[var(--neon-primary)] data-[state=active]:text-[#0a0a0f]"
             >
               <Settings className="h-4 w-4 mr-2" />
@@ -290,9 +324,10 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
           {/* Integrations Tab */}
           <TabsContent value="integrations" className="space-y-6">
             <h2 className="text-2xl font-bold text-white">Connected Integrations</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div data-demo="integrations-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* GitHub Integration Card */}
               <div
+                data-demo="github-card"
                 className="p-6 rounded-xl border bg-[#12121a]"
                 style={{
                   borderColor: githubIntegration ? "var(--neon-primary)" : "rgba(255,255,255,0.1)",
@@ -377,6 +412,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
 
               {/* Hugging Face Integration Card */}
               <div
+                data-demo="huggingface-card"
                 className="p-6 rounded-xl border bg-[#12121a]"
                 style={{
                   borderColor: huggingfaceIntegration ? "var(--neon-primary)" : "rgba(255,255,255,0.1)",
@@ -515,7 +551,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div data-demo="repo-grid" className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {repositories.map((repo) => (
                   <div
                     key={repo.id}
@@ -616,7 +652,7 @@ export function DashboardClient({ user, profile, integrations, repositories, mod
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div data-demo="models-grid" className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {models.map((model) => (
                   <div
                     key={model.id}
